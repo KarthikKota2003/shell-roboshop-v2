@@ -2,6 +2,8 @@
 
 app_name="cart"
 
+source ./common.sh
+
 check_user
 
 app_setup
