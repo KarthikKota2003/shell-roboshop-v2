@@ -92,6 +92,32 @@ nodejs_setup(){
     validate $? "Installing dependencies"
 }
 
+java_setup(){
+    #Installing Java and Maven
+    dnf module enable maven:3.9 -y &>> $logs_file
+    dnf install maven java-25-openjdk-devel -y &>> $logs_file
+    validate $? "Installing Java and Maven"
+
+    #Configuring java version
+    alternatives --set java /usr/lib/jvm/java-25-openjdk/bin/java 
+    validate $? "Configuring Java Version"
+
+    #Configuring Java Version in Maven
+    echo "export JAVA_HOME=$(dirname $(dirname $(readlink -f /usr/bin/java)))" > /etc/profile.d/java.sh
+    source /etc/profile.d/java.sh
+    echo $JAVA_HOME
+    validate $? "Configuring Java Version in Maven"
+
+
+    #Installing dependencies
+    mvn clean package &>> $logs_file
+    validate $? "Installing dependencies"
+
+    mv target/shipping.jar shipping.jar
+    validate $? "Moving jar file"
+}
+
+
 restart(){
     #Restarting catalogue service to refresh service file again
     systemctl restart "$app_name"
