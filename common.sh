@@ -117,6 +117,21 @@ java_setup(){
     validate $? "Moving jar file"
 }
 
+python_setup(){
+    #Installing Python
+    dnf install python3.14 python3.14-pip -y &>> $logs_file
+    python3.14 --version &>> $logs_file
+    validate $? "Installing Python"
+
+
+    #Installing dependencies
+    python3.14 -m venv /app/.venv &>> $logs_file
+    validate $? "Creating Virutal Environment"
+
+    /app/.venv/bin/pip install -r requirements.txt &>> $logs_file
+    validate $? "Installing dependencies"
+}
+
 
 restart(){
     #Restarting catalogue service to refresh service file again
