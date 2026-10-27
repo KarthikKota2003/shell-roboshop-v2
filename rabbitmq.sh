@@ -4,6 +4,9 @@ source ./common.sh
 
 check_user
 
+#Copying rabbit repo from local file to /etc/yum.repos.d location
+cp rabbitmq.repo /etc/yum.repos.d/rabbitmq.repo
+
 #Installing rabbitmq
 dnf install erlang rabbitmq-server -y &>> $logs_file
 validate $? "RabbitMQ installation"

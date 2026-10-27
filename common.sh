@@ -40,6 +40,61 @@ total_time(){
     echo -e "$(timestamp) ${B}[INFO]${N} ==== Script completed execution ====" | tee -a $logs_file
 }
 
+app_setup(){
+    #Creating system user
+    id roboshop &>> $logs_file
+    if (( $? != 0 ));then
+        useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
+        validate $? "Creating System User"
+    else
+        echo -e "User already exists ... ${Y}SKIPPING${N}" 
+    fi
+
+    #Removing old code
+    rm -rf /app
+    validate $? "Removing Old Code"
+
+    #Creating app directory
+    mkdir -p /app
+    validate $? "Creating App Directory"
+
+    #Downloading and unzipping code
+    curl -L -o /tmp/"$app_name".zip https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/"$app_name"-v4.zip &>> $logs_file
+    cd /app
+    unzip /tmp/"$app_name".zip &>> $logs_file
+    validate $? "Unzipping code"
+}
+
+system_setup(){
+    #Creating SystemD file
+    sed -i "s/DOMAIN_NAME/$domain_name/g" "$script_dir"/"$app_name".service
+    cp $script_dir/"$app_name".service /etc/systemd/system/"$app_name".service
+
+    #Starting catalogue service
+    systemctl daemon-reload
+    systemctl enable "$app_name" &>> $logs_file
+    systemctl start "$app_name"
+    validate $? "Starting "$app_name" Service"
+}
+
+nodejs_setup(){
+    #Installing Nodejs
+    dnf module disable nodejs -y &>> $logs_file
+    dnf module enable nodejs:24 -y &>> $logs_file
+    dnf install nodejs -y &>> $logs_file
+    validate $? "Installing Nodejs"
+
+    #Installing dependencies
+    npm install &>> $logs_file
+    validate $? "Installing dependencies"
+}
+
+restart(){
+    #Restarting catalogue service to refresh service file again
+    systemctl restart "$app_name"
+    validate $? "Restarting $app_name"
+}
+
 mkdir -p $logs_folder 
 
 echo -e "$(timestamp) ${B}[INFO]${N} ==== Script started execution ====" | tee -a $logs_file
